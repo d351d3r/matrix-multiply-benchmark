@@ -1,20 +1,26 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <random>
+#include <vector>
+
+float randomFloat() {
+  static std::random_device rd;
+  static std::mt19937 gen{rd()};
+  std::uniform_real_distribution<float> dist{0, 1};
+  return dist(gen);
+}
 
 using namespace Eigen;
 void setRandom(MatrixXf &a, Index size) {
   a.resize(size, size);
-  static std::random_device rd;
-  static std::mt19937 gen{rd()};
-  std::uniform_real_distribution<float> dist{0, 1};
   const Index rows = a.rows(), cols = a.cols();
   for (Index i = 0; i != rows; i++)
     for (Index j = 0; j != cols; j++)
-      a(i, j) = dist(gen);
+      a(i, j) = randomFloat();
 }
 
 int main(int argc, const char **argv) {
@@ -31,11 +37,25 @@ int main(int argc, const char **argv) {
   MatrixXf a, b;
   setRandom(a, size);
   setRandom(b, size);
-  auto t1 = std::chrono::steady_clock::now();
+  std::vector<double> resultSecs;
+  std::vector<double> results;
+  resultSecs.reserve(repeat);
+  results.reserve(repeat);
   for (int i = 0; i < repeat; i++) {
-    volatile MatrixXf c = a * b;
+    auto t1 = std::chrono::steady_clock::now();
+    const MatrixXf c = a * b;
+    auto t2 = std::chrono::steady_clock::now();
+    const double s = std::chrono::duration<double>(t2 - t1).count() / repeat;
+    resultSecs.push_back(s);
+    results.push_back(c(size - 1, size - 1));
+    a(size - 1, size - 1) = randomFloat();
   }
-  auto t2 = std::chrono::steady_clock::now();
-  const double s = std::chrono::duration<double>(t2 - t1).count() / repeat;
-  std::cout << s << " s" << std::endl;
+  std::cout << '[';
+  for (auto a : resultSecs)
+    std::cout << a << ' ';
+  std::cout << "] s" << std::endl;
+  std::cout << "min = "
+            << *std::min_element(resultSecs.begin(), resultSecs.end())
+            << std::endl;
+  std::cout << "results.back = " << results.back() << std::endl;
 }
