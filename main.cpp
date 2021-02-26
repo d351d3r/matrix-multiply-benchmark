@@ -45,7 +45,7 @@ int main(int argc, const char **argv) {
     auto t1 = std::chrono::steady_clock::now();
     const MatrixXf c = a * b;
     auto t2 = std::chrono::steady_clock::now();
-    const double s = std::chrono::duration<double>(t2 - t1).count() / repeat;
+    const double s = std::chrono::duration<double>(t2 - t1).count();
     resultSecs.push_back(s);
     results.push_back(c(size - 1, size - 1));
     a(size - 1, size - 1) = randomFloat();
@@ -55,7 +55,7 @@ int main(int argc, const char **argv) {
     std::cout << a << ' ';
   std::cout << "] s" << std::endl;
   std::cout << "min = "
-            << *std::min_element(resultSecs.begin(), resultSecs.end())
+            << *std::min_element(resultSecs.begin(), resultSecs.end()) << " s"
             << std::endl;
   std::cout << "results.back = " << results.back() << std::endl;
 }
